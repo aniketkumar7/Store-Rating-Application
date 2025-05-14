@@ -117,7 +117,7 @@ exports.login = async (req, res) => {
 
 exports.updatePassword = async (req, res) => {
   try {
-    console.log('Update password request received');
+
     const { currentPassword, newPassword } = req.body;
     const userId = req.user?.id;
 
@@ -142,7 +142,6 @@ exports.updatePassword = async (req, res) => {
     }
 
     const user = users[0];
-    console.log('Found user:', { id: user.id, email: user.email });
 
     let validPassword = false;
 
@@ -150,7 +149,6 @@ exports.updatePassword = async (req, res) => {
     if (user.role === 'admin' && user.password === currentPassword) {
       validPassword = true;
     } else {
-
       validPassword = await bcrypt.compare(currentPassword, user.password);
     }
 

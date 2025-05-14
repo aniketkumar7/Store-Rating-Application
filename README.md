@@ -36,9 +36,25 @@ A full-stack web application that allows users to submit ratings for stores regi
 - Node.js (v14 or higher)
 - MySQL (v5.7 or higher)
 
+
 ### Database Setup
 
-1. Create a MySQL database named `store_rating_app` (this will be done automatically by the init-db script)
+1. Make sure your MySQL server is running and your credentials are correctly set in the `.env` file
+
+2. Run the database initialization script:
+
+```
+cd server
+npm run init-db
+```
+This script will create the database, tables, and admin user automatically.
+
+#### Alternative: Manual Setup
+
+If you prefer to set up the database manually, you can:
+
+1. Open MySQL Workbench or MySQL command line client
+2. Run the schema.sql file located in the server/db directory:
 
 ### Backend Setup
 
@@ -62,8 +78,6 @@ A full-stack web application that allows users to submit ratings for stores regi
    JWT_SECRET=your_jwt_secret_key_here
    PORT=5000
    ```
-
-
 
 
 5. Start the server:
@@ -90,10 +104,6 @@ A full-stack web application that allows users to submit ratings for stores regi
 
 4. Open your browser and navigate to `http://localhost:5173`
 
-## Default Admin Account
-
-- Email: admin@example.com
-- Password: Admin@123
 
 ## Form Validations
 

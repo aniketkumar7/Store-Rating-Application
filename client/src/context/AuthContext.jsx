@@ -6,13 +6,8 @@ export const AuthContext = createContext();
 const API_BASE = 'http://localhost:5000';
 
 const setAuthToken = (token) => {
-  if (token) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    localStorage.setItem('token', token);
-  } else {
-    delete axios.defaults.headers.common['Authorization'];
-    localStorage.removeItem('token');
-  }
+  axios.defaults.headers.common['Authorization'] = token ? `Bearer ${token}` : null;
+  token ? localStorage.setItem('token', token) : localStorage.removeItem('token');
 };
 
 const setUserData = (user) => {
@@ -28,7 +23,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // On mount, check localStorage for user and token
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');

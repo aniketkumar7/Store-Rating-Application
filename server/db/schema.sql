@@ -2,7 +2,7 @@ DROP DATABASE IF EXISTS store_rating_app;
 CREATE DATABASE store_rating_app;
 USE store_rating_app;
 
-
+-- Create users table
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(60) NOT NULL,
@@ -14,20 +14,19 @@ CREATE TABLE users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-
-
+-- Create stores table
 CREATE TABLE stores (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
-  address VARCHAR(400) CHECK (CHAR_LENGTH(address) <= 400),
+  address VARCHAR(400),
   owner_id INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-
+-- Create ratings table
 CREATE TABLE ratings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -40,9 +39,18 @@ CREATE TABLE ratings (
   FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 );
 
-
+-- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_stores_owner_id ON stores(owner_id);
 CREATE INDEX idx_ratings_store_id ON ratings(store_id);
 CREATE INDEX idx_ratings_user_id ON ratings(user_id);
 
+-- Create admin user
+INSERT INTO users (name, email, password, address, role)
+VALUES (
+  'System Administrator',
+  'admin@example.com',
+  'Admin@123',
+  'Admin Office Address',
+  'admin'
+);

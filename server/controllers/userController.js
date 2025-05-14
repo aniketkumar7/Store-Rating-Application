@@ -9,10 +9,10 @@ exports.getAllUsers = async (req, res) => {
 
     let query = `
       SELECT u.id, u.name, u.email, u.address, u.role, u.created_at,
-      (SELECT AVG(r.rating) FROM ratings r
-      INNER JOIN stores s ON r.store_id = s.id
-      WHERE s.owner_id = u.id) as average_rating
+        AVG(r.rating) as average_rating
       FROM users u
+      LEFT JOIN stores s ON s.owner_id = u.id
+      LEFT JOIN ratings r ON r.store_id = s.id
       WHERE 1=1
     `;
 
@@ -38,7 +38,7 @@ exports.getAllUsers = async (req, res) => {
       params.push(role);
     }
 
-    query += ' ORDER BY u.name ASC';
+    query += ' GROUP BY u.id ORDER BY u.name ASC';
 
     const [users] = await pool.query(query, params);
 
@@ -50,17 +50,19 @@ exports.getAllUsers = async (req, res) => {
 };
 
 
+
 exports.getUserById = async (req, res) => {
   try {
     const userId = req.params.id;
 
     const [users] = await pool.query(`
       SELECT u.id, u.name, u.email, u.address, u.role, u.created_at,
-      (SELECT AVG(r.rating) FROM ratings r
-      INNER JOIN stores s ON r.store_id = s.id
-      WHERE s.owner_id = u.id) as average_rating
+             AVG(r.rating) as average_rating
       FROM users u
+      LEFT JOIN stores s ON s.owner_id = u.id
+      LEFT JOIN ratings r ON r.store_id = s.id
       WHERE u.id = ?
+      GROUP BY u.id
     `, [userId]);
 
     if (users.length === 0) {
@@ -75,12 +77,11 @@ exports.getUserById = async (req, res) => {
 };
 
 
-
-
 exports.createUser = async (req, res) => {
   try {
     const { name, email, password, address, role } = req.body;
 
+    // Validate input
     const nameValidation = validateName(name);
     if (!nameValidation.valid) {
       return res.status(400).json({ message: nameValidation.message });
@@ -101,16 +102,18 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: addressValidation.message });
     }
 
+
     const validRoles = ['admin', 'user', 'store_owner'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
-    const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
+    const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
+
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -119,6 +122,7 @@ exports.createUser = async (req, res) => {
       'INSERT INTO users (name, email, password, address, role) VALUES (?, ?, ?, ?, ?)',
       [name, email, hashedPassword, address, role]
     );
+
 
     const [newUser] = await pool.query(
       'SELECT id, name, email, address, role FROM users WHERE id = ?',
@@ -138,19 +142,21 @@ exports.createUser = async (req, res) => {
 
 exports.getDashboardStats = async (req, res) => {
   try {
-    const [userCount] = await pool.query('SELECT COUNT(*) as count FROM users');
-    const [storeCount] = await pool.query('SELECT COUNT(*) as count FROM stores');
-    const [ratingCount] = await pool.query('SELECT COUNT(*) as count FROM ratings');
+    
+    const [stats] = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM users) as totalUsers,
+        (SELECT COUNT(*) FROM stores) as totalStores,
+        (SELECT COUNT(*) FROM ratings) as totalRatings
+    `);
 
     res.status(200).json({
-      totalUsers: userCount[0].count,
-      totalStores: storeCount[0].count,
-      totalRatings: ratingCount[0].count
+      totalUsers: stats[0].totalUsers,
+      totalStores: stats[0].totalStores,
+      totalRatings: stats[0].totalRatings
     });
   } catch (error) {
     console.error('Error getting dashboard statistics:', error);
     res.status(500).json({ message: 'Server error while fetching dashboard statistics' });
   }
 };
-
-
